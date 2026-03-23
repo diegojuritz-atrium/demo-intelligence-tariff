@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: slv_suppliers
+    description: Suppliers enriched with country details
+    columns:
+      - name: supplier_id
+        tests: [unique, not_null]
+      - name: country_code
+        tests: [not_null]
+
+  - name: slv_parts_costed
+    description: Parts joined with supplier costs and country info
+    columns:
+      - name: parts_supplier_id
+        tests: [unique, not_null]
+      - name: unit_cost
+        tests: [not_null]
+
+  - name: slv_product_bom
+    description: Product bill of materials with part details and weights
+    columns:
+      - name: product_part_id
+        tests: [unique, not_null]
+      - name: total_part_weight_kg
+        tests: [not_null]
+
+  - name: slv_active_tariffs
+    description: Tariffs enriched with country names and severity bands
+    columns:
+      - name: tariff_id
+        tests: [unique, not_null]
+      - name: tariff_band
+        tests:
+          - accepted_values:
+              values: ['Zero', 'Low', 'Medium', 'High', 'Very High']
+
+  - name: slv_shipping_routes
+    description: Shipping routes enriched with country details and speed tiers
+    columns:
+      - name: route_id
+        tests: [unique, not_null]
+      - name: speed_tier
+        tests:
+          - accepted_values:
+              values: ['Express', 'Standard', 'Economy', 'Slow']

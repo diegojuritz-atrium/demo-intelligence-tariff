@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: gld_dim_date
+    description: Date dimension spanning 2019-2026
+    columns:
+      - name: date_key
+        tests: [unique, not_null]
+
+  - name: gld_dim_country
+    description: Country dimension with region hierarchy
+    columns:
+      - name: country_key
+        tests: [unique, not_null]
+      - name: country_code
+        tests: [unique, not_null]
+
+  - name: gld_dim_product
+    description: Product dimension with category hierarchy
+    columns:
+      - name: product_key
+        tests: [unique, not_null]
+
+  - name: gld_dim_part
+    description: Part/component dimension
+    columns:
+      - name: part_key
+        tests: [unique, not_null]
+
+  - name: gld_dim_supplier
+    description: Supplier dimension with location and rating
+    columns:
+      - name: supplier_key
+        tests: [unique, not_null]
+
+  - name: gld_fact_procurement
+    description: Procurement fact - all sourcing options with landed costs
+    columns:
+      - name: procurement_key
+        tests: [unique, not_null]
+      - name: product_key
+        tests: [not_null]
+      - name: supplier_key
+        tests: [not_null]
+      - name: landed_cost
+        tests: [not_null]
+
+  - name: gld_fact_tariff_impact
+    description: Tariff impact fact - rate changes over time by country
+    columns:
+      - name: tariff_impact_key
+        tests: [unique, not_null]
+      - name: source_country_key
+        tests: [not_null]
