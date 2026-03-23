@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: tariff_raw
+    database: DJURITZ
+    schema: TARIFF
+    tables:
+      - name: RAW_COUNTRIES
+        description: Reference table of 50 trading partner countries
+      - name: RAW_PRODUCT_CATALOG
+        description: 200 products across Electronics, Appliances, Industrial, Automotive
+      - name: RAW_PARTS
+        description: 1000 components across 20 part categories
+      - name: RAW_PRODUCT_PARTS
+        description: Bill of materials linking products to parts
+      - name: RAW_SUPPLIERS
+        description: 500 suppliers across 25 countries
+      - name: RAW_PARTS_SUPPLIER
+        description: Part-supplier mappings with unit costs
+      - name: RAW_MARKET_TARIFFS
+        description: Government tariffs by country, HS code, and date
+      - name: RAW_ROUTES
+        description: Shipping routes from supplier countries to USA

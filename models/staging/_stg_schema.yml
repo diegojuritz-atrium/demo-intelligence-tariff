@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: stg_countries
+    description: Staged country reference data
+    columns:
+      - name: country_code
+        tests: [unique, not_null]
+      - name: country_name
+        tests: [not_null]
+
+  - name: stg_product_catalog
+    description: Staged product catalog
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+      - name: product_category
+        tests:
+          - accepted_values:
+              values: ['Electronics', 'Appliances', 'Industrial', 'Automotive']
+
+  - name: stg_parts
+    description: Staged parts/components
+    columns:
+      - name: part_id
+        tests: [unique, not_null]
+      - name: part_number
+        tests: [unique, not_null]
+
+  - name: stg_product_parts
+    description: Staged bill of materials
+    columns:
+      - name: product_part_id
+        tests: [unique, not_null]
+      - name: product_id
+        tests: [not_null]
+      - name: part_id
+        tests: [not_null]
+
+  - name: stg_suppliers
+    description: Staged supplier data
+    columns:
+      - name: supplier_id
+        tests: [unique, not_null]
+
+  - name: stg_parts_supplier
+    description: Staged part-supplier mappings
+    columns:
+      - name: parts_supplier_id
+        tests: [unique, not_null]
+      - name: unit_cost
+        tests: [not_null]
+
+  - name: stg_market_tariffs
+    description: Staged government tariff records
+    columns:
+      - name: tariff_id
+        tests: [unique, not_null]
+      - name: tariff_rate_pct
+        tests: [not_null]
+
+  - name: stg_routes
+    description: Staged shipping routes
+    columns:
+      - name: route_id
+        tests: [unique, not_null]
