@@ -1,0 +1,25 @@
+name: tariff_intelligence
+version: '1.0.0'
+config-version: 2
+
+profile: default
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  tariff_intelligence:
+    staging:
+      +materialized: view
+      +schema: TARIFF
+    silver:
+      +materialized: table
+      +schema: TARIFF
+    gold:
+      +materialized: table
+      +schema: TARIFF

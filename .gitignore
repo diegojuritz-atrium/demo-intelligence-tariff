@@ -1,0 +1,20 @@
+# dbt
+target/
+dbt_packages/
+logs/
+
+# Credentials - NEVER commit
+profiles.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.env

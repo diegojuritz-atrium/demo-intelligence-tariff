@@ -8,37 +8,6 @@
 
 ---
 
-## Table of Contents
-
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Data Model](#-data-model)
-- [dbt Project](#-dbt-project)
-- [Semantic View](#-semantic-view)
-- [Snowflake Intelligence Agent](#-snowflake-intelligence-agent)
-- [Demo Questions](#-demo-questions)
-- [Infrastructure Setup](#-infrastructure-setup)
-- [How to Replicate](#-how-to-replicate)
-
----
-
-## Overview
-
-A US-based manufacturing company sources parts from **500+ suppliers across 25 countries** to assemble products in 4 categories: Electronics, Appliances, Industrial, and Automotive. Government tariffs, shipping costs, and supplier pricing all impact the **total landed cost** of each procurement decision.
-
-This demo showcases how **Snowflake Intelligence** helps operations, finance, and supply chain teams answer critical business questions in natural language — without writing SQL.
-
-### Business Problem
-# Tariff Intelligence Demo
-
-> Snowflake Intelligence demo for a US-based manufacturer optimizing global procurement costs under tariff scenarios.
-
-**Repository:** [github.com/diegojuritz-atrium/demo-intelligence-tariff](https://github.com/diegojuritz-atrium/demo-intelligence-tariff)
-**Platform:** Snowflake · dbt · Snowflake Intelligence
-**Database:** `DJURITZ` · **Schema:** `TARIFF`
-
----
-
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
