@@ -4,7 +4,7 @@
 
 **Repository:** [github.com/diegojuritz-atrium/demo-intelligence-tariff](https://github.com/diegojuritz-atrium/demo-intelligence-tariff)
 **Platform:** Snowflake · dbt · Snowflake Intelligence
-**Database:** `DJURITZ` · **Schema:** `TARIFF`
+**Database:** `DEMO_INTELLIGENCE` · **Schema:** `TARIFF`
 
 ---
 
@@ -173,21 +173,21 @@ The dbt project is deployed as a **Snowflake DBT PROJECT** object and can be sch
 
 ```sql
 -- Create a scheduled task (adjust time as needed)
-CREATE OR ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD
+CREATE OR ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD
   WAREHOUSE = DE_WH
   SCHEDULE = 'USING CRON 0 6 * * * America/New_York'  -- Daily at 6 AM ET
 AS
-  EXECUTE DBT PROJECT DJURITZ.TARIFF.TARIFF_INTELLIGENCE
+  EXECUTE DBT PROJECT DEMO_INTELLIGENCE.TARIFF.TARIFF_INTELLIGENCE
     ARGS='build --target dev';
 
 -- Activate the task
-ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD RESUME;
+ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD RESUME;
 
 -- Suspend when not needed
-ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD SUSPEND;
+ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD SUSPEND;
 
 -- Check task status
-SHOW TASKS IN SCHEMA DJURITZ.TARIFF;
+SHOW TASKS IN SCHEMA DEMO_INTELLIGENCE.TARIFF;
 ```
 
 ---
@@ -209,7 +209,7 @@ The semantic view `SV_TARIFF_INTELLIGENCE` sits on top of the gold star schema a
 
 ```sql
 SELECT * FROM SEMANTIC_VIEW(
-  DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE
+  DEMO_INTELLIGENCE.TARIFF.SV_TARIFF_INTELLIGENCE
   METRICS procurement.avg_landed_cost, procurement.avg_tariff_rate
   DIMENSIONS dim_supplier.supplier_country
 )
@@ -220,7 +220,7 @@ ORDER BY AVG_LANDED_COST DESC;
 
 ## 🤖 Snowflake Intelligence Agent
 
-The `TARIFF_AGENT` in `DJURITZ.TARIFF` uses the semantic view as its tool, allowing users to ask business questions in natural language and receive SQL-backed answers.
+The `TARIFF_AGENT` in `DEMO_INTELLIGENCE.TARIFF` uses the semantic view as its tool, allowing users to ask business questions in natural language and receive SQL-backed answers.
 
 ### Target Personas
 
@@ -313,12 +313,12 @@ CREATE OR REPLACE API INTEGRATION git_tariff_integration
 GRANT USAGE ON INTEGRATION git_tariff_integration TO ROLE DATA_ENGINEERING;
 
 -- 3. Create Git repository object
-CREATE OR REPLACE GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF
+CREATE OR REPLACE GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF
   API_INTEGRATION = git_tariff_integration
   ORIGIN = 'https://github.com/diegojuritz-atrium/demo-intelligence-tariff.git';
 
 -- 4. Sync with remote
-ALTER GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
+ALTER GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
 ```
 
 ### dbt Project Deployment
@@ -326,34 +326,34 @@ ALTER GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
 ```sql
 -- Deploy dbt project from Workspace (via UI: Connect → Deploy dbt project)
 -- Or verify deployed project:
-SHOW DBT PROJECTS IN SCHEMA DJURITZ.TARIFF;
+SHOW DBT PROJECTS IN SCHEMA DEMO_INTELLIGENCE.TARIFF;
 ```
 
 ### Task Scheduling
 
 ```sql
 -- Schedule daily dbt build
-CREATE OR ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD
+CREATE OR ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD
   WAREHOUSE = DE_WH
   SCHEDULE = 'USING CRON 0 6 * * * America/New_York'
 AS
-  EXECUTE DBT PROJECT DJURITZ.TARIFF.TARIFF_INTELLIGENCE
+  EXECUTE DBT PROJECT DEMO_INTELLIGENCE.TARIFF.TARIFF_INTELLIGENCE
     ARGS='build --target dev';
 
-ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD RESUME;
+ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD RESUME;
 
 -- Suspend when done
-ALTER TASK DJURITZ.TARIFF.TASK_DBT_BUILD SUSPEND;
+ALTER TASK DEMO_INTELLIGENCE.TARIFF.TASK_DBT_BUILD SUSPEND;
 ```
 
 ### Semantic View
 
 ```sql
 -- Verify semantic view exists
-SHOW SEMANTIC VIEWS IN SCHEMA DJURITZ.TARIFF;
+SHOW SEMANTIC VIEWS IN SCHEMA DEMO_INTELLIGENCE.TARIFF;
 
 -- Grant access
-GRANT REFERENCES, SELECT ON SEMANTIC VIEW DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE
+GRANT REFERENCES, SELECT ON SEMANTIC VIEW DEMO_INTELLIGENCE.TARIFF.SV_TARIFF_INTELLIGENCE
   TO ROLE DEMO_AGENT_RL;
 ```
 
@@ -361,12 +361,82 @@ GRANT REFERENCES, SELECT ON SEMANTIC VIEW DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE
 
 ## 🚀 How to Replicate
 
-1. **Create schema:** `CREATE SCHEMA <your_db>.TARIFF;`
-2. **Run raw data DDL:** Execute `demo_tariff.sql` to create and populate all `RAW_*` tables
-3. **Set up dbt project:** Clone the repo and run `dbt build --project-dir tariff_intelligence`
-4. **Create semantic view:** The `CREATE SEMANTIC VIEW` statement is in `demo_tariff.sql`
-5. **Create Snowflake Intelligence agent:** Add `SV_TARIFF_INTELLIGENCE` as a semantic view tool
-6. **Test with demo questions** listed above
+1. **Create schema:** `CREATE SCHEMA DEMO_INTELLIGENCE.TARIFF;`
+2. **Run raw data DDL:** Execute `tarrif_complete_setup.sql` to create and populate all `RAW_*` tables, the semantic view, and the Cortex Agent
+3. **Deploy the dbt project from Git** — see [Deploying from Git](#-deploying-from-git) below
+4. **Run the dbt project:** `dbt build` from the Workspace or schedule via Snowflake Tasks
+5. **Test with demo questions** listed above
+
+---
+
+## 📦 Deploying from Git
+
+Since this project is stored in a Git repository, you must manually deploy it into Snowflake. Follow these steps:
+
+### 1. Create the Git Integration
+
+```sql
+-- Create API integration for GitHub (requires ACCOUNTADMIN or appropriate privileges)
+CREATE OR REPLACE API INTEGRATION git_tariff_integration
+  API_PROVIDER = git_https_api
+  API_ALLOWED_PREFIXES = ('https://github.com/diegojuritz-atrium')
+  API_USER_AUTHENTICATION = (TYPE = SNOWFLAKE_GITHUB_APP)
+  ENABLED = TRUE;
+
+-- Grant to your working role
+GRANT USAGE ON INTEGRATION git_tariff_integration TO ROLE DATA_ENGINEERING;
+```
+
+### 2. Create the Git Repository Object
+
+```sql
+CREATE OR REPLACE GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF
+  API_INTEGRATION = git_tariff_integration
+  ORIGIN = 'https://github.com/diegojuritz-atrium/demo-intelligence-tariff.git';
+
+-- Fetch latest changes
+ALTER GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
+```
+
+### 3. Connect a Workspace
+
+1. Open **Snowsight → Workspaces**
+2. Create or open a workspace
+3. Click **Connect to Git** (top-left, near the branch name)
+4. Select the repository `DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF`
+5. Choose the branch (e.g., `main`)
+
+### 4. Deploy the dbt Project
+
+From the Workspace:
+1. Click **Connect → Deploy dbt project** in the workspace toolbar
+2. This creates a Snowflake `DBT PROJECT` object that can be executed and scheduled
+
+Or via SQL:
+```sql
+-- Verify the deployed project
+SHOW DBT PROJECTS IN SCHEMA DEMO_INTELLIGENCE.TARIFF;
+
+-- Execute the project
+EXECUTE DBT PROJECT DEMO_INTELLIGENCE.TARIFF.TARIFF_INTELLIGENCE
+  ARGS = 'build --target dev';
+```
+
+### 5. Run the Setup SQL
+
+Execute `tarrif_complete_setup.sql` in a Snowsight worksheet or the Workspace. This creates:
+- All `RAW_*` source tables with synthetic data
+- The semantic view `SV_TARIFF_INTELLIGENCE`
+- The Cortex Agent `TARIFF_AGENT`
+
+### 6. Push Changes Back to Git
+
+From the Workspace:
+1. Click the **branch name** (top-left)
+2. Stage your changes and commit
+3. Click **Push** to sync with GitHub
+
+> **Note:** If push fails with an integration error, disconnect and reconnect the workspace to the Git repository (see [Infrastructure Setup](#-infrastructure-setup)).
 
 ---
 
