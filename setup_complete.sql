@@ -1,7 +1,8 @@
 -- ============================================================================
 -- TARIFF INTELLIGENCE DEMO - COMPLETE SETUP SCRIPT
 -- ============================================================================
--- This script creates ALL objects in DJURITZ.TARIFF from scratch.
+-- This script creates ALL objects in your current DB/SCHEMA.
+-- BEFORE RUNNING: Execute USE DATABASE <your_db>; USE SCHEMA <your_schema>;
 -- Run sections in order. Some sections require ACCOUNTADMIN.
 --
 -- Objects created:
@@ -23,11 +24,10 @@
 -- SECTION 0: SCHEMA SETUP
 -- ============================================================================
 
-USE ROLE DATA_ENGINEERING;
-USE WAREHOUSE DE_WH;
-USE DATABASE DJURITZ;
-CREATE SCHEMA IF NOT EXISTS DJURITZ.TARIFF;
-USE SCHEMA DJURITZ.TARIFF;
+-- SET THESE VARIABLES BEFORE RUNNING:
+SET TARGET_DB = CURRENT_DATABASE();
+SET TARGET_SCHEMA = CURRENT_SCHEMA();
+-- Ensure you have run: USE DATABASE <your_db>; USE SCHEMA <your_schema>; USE WAREHOUSE <your_wh>;
 
 
 -- ============================================================================
@@ -287,35 +287,35 @@ LIMIT 3250;
 
 CREATE OR REPLACE VIEW STG_COUNTRIES AS
 SELECT country_code, country_name, region, continent
-FROM DJURITZ.TARIFF.RAW_COUNTRIES;
+FROM RAW_COUNTRIES;
 
 CREATE OR REPLACE VIEW STG_PRODUCT_CATALOG AS
 SELECT product_id, product_name, product_category, sub_category, msrp, weight_kg, launch_date, is_active
-FROM DJURITZ.TARIFF.RAW_PRODUCT_CATALOG;
+FROM RAW_PRODUCT_CATALOG;
 
 CREATE OR REPLACE VIEW STG_PARTS AS
 SELECT part_id, part_number, part_name, part_category, unit_of_measure, weight_kg
-FROM DJURITZ.TARIFF.RAW_PARTS;
+FROM RAW_PARTS;
 
 CREATE OR REPLACE VIEW STG_PRODUCT_PARTS AS
 SELECT product_part_id, product_id, part_id, quantity_required, is_critical
-FROM DJURITZ.TARIFF.RAW_PRODUCT_PARTS;
+FROM RAW_PRODUCT_PARTS;
 
 CREATE OR REPLACE VIEW STG_SUPPLIERS AS
 SELECT supplier_id, TRIM(supplier_name) AS supplier_name, country_code, TRIM(city) AS city, supplier_rating, lead_time_days, is_active
-FROM DJURITZ.TARIFF.RAW_SUPPLIERS;
+FROM RAW_SUPPLIERS;
 
 CREATE OR REPLACE VIEW STG_PARTS_SUPPLIER AS
 SELECT parts_supplier_id, part_id, supplier_id, unit_cost, currency, min_order_qty, is_preferred, is_active
-FROM DJURITZ.TARIFF.RAW_PARTS_SUPPLIER;
+FROM RAW_PARTS_SUPPLIER;
 
 CREATE OR REPLACE VIEW STG_MARKET_TARIFFS AS
 SELECT tariff_id, source_country_code, destination_country_code, hs_code, product_category, tariff_rate_pct, effective_date, end_date, tariff_type, is_active
-FROM DJURITZ.TARIFF.RAW_MARKET_TARIFFS;
+FROM RAW_MARKET_TARIFFS;
 
 CREATE OR REPLACE VIEW STG_ROUTES AS
 SELECT route_id, origin_country_code, destination_country_code, transport_mode, transit_days, cost_per_kg, cost_per_unit, reliability_score, is_active
-FROM DJURITZ.TARIFF.RAW_ROUTES;
+FROM RAW_ROUTES;
 
 
 -- ============================================================================
@@ -469,21 +469,21 @@ JOIN GLD_DIM_COUNTRY dc ON t.source_country_code = dc.country_code;
 
 CREATE OR REPLACE SEMANTIC VIEW SV_TARIFF_INTELLIGENCE
   TABLES (
-    procurement AS DJURITZ.TARIFF.GLD_FACT_PROCUREMENT PRIMARY KEY (PROCUREMENT_KEY)
+    procurement AS GLD_FACT_PROCUREMENT PRIMARY KEY (PROCUREMENT_KEY)
       WITH SYNONYMS ('procurement options', 'sourcing options', 'landed cost analysis')
       COMMENT = 'Procurement options with landed costs including tariffs and shipping',
-    tariff_impact AS DJURITZ.TARIFF.GLD_FACT_TARIFF_IMPACT PRIMARY KEY (TARIFF_IMPACT_KEY)
+    tariff_impact AS GLD_FACT_TARIFF_IMPACT PRIMARY KEY (TARIFF_IMPACT_KEY)
       WITH SYNONYMS ('tariff changes', 'tariff history', 'duty rates')
       COMMENT = 'Tariff rates over time by country and product category',
-    dim_product AS DJURITZ.TARIFF.GLD_DIM_PRODUCT PRIMARY KEY (PRODUCT_KEY)
+    dim_product AS GLD_DIM_PRODUCT PRIMARY KEY (PRODUCT_KEY)
       WITH SYNONYMS ('products', 'items', 'goods') COMMENT = 'Product dimension',
-    dim_part AS DJURITZ.TARIFF.GLD_DIM_PART PRIMARY KEY (PART_KEY)
+    dim_part AS GLD_DIM_PART PRIMARY KEY (PART_KEY)
       WITH SYNONYMS ('parts', 'components', 'materials') COMMENT = 'Part dimension',
-    dim_supplier AS DJURITZ.TARIFF.GLD_DIM_SUPPLIER PRIMARY KEY (SUPPLIER_KEY)
+    dim_supplier AS GLD_DIM_SUPPLIER PRIMARY KEY (SUPPLIER_KEY)
       WITH SYNONYMS ('suppliers', 'vendors', 'manufacturers') COMMENT = 'Supplier dimension',
-    dim_country AS DJURITZ.TARIFF.GLD_DIM_COUNTRY PRIMARY KEY (COUNTRY_KEY)
+    dim_country AS GLD_DIM_COUNTRY PRIMARY KEY (COUNTRY_KEY)
       WITH SYNONYMS ('countries', 'nations', 'origins') COMMENT = 'Country dimension',
-    dim_date AS DJURITZ.TARIFF.GLD_DIM_DATE PRIMARY KEY (DATE_KEY)
+    dim_date AS GLD_DIM_DATE PRIMARY KEY (DATE_KEY)
       WITH SYNONYMS ('dates', 'calendar') COMMENT = 'Date dimension'
   )
   RELATIONSHIPS (
@@ -563,21 +563,21 @@ CREATE OR REPLACE SEMANTIC VIEW SV_TARIFF_INTELLIGENCE
 
 -- 6.1 API Integration
 -- USE ROLE ACCOUNTADMIN;
+-- UPDATE the prefixes and origin URL to match your GitHub org/repo
 CREATE OR REPLACE API INTEGRATION GIT_TARIFF_INTEGRATION
   API_PROVIDER = git_https_api
-  API_ALLOWED_PREFIXES = ('https://github.com/diegojuritz-atrium')
+  API_ALLOWED_PREFIXES = ('https://github.com/<YOUR_GITHUB_ORG>')
   API_USER_AUTHENTICATION = (TYPE = SNOWFLAKE_GITHUB_APP)
   ENABLED = TRUE;
 
-GRANT USAGE ON INTEGRATION GIT_TARIFF_INTEGRATION TO ROLE DATA_ENGINEERING;
+-- GRANT USAGE ON INTEGRATION GIT_TARIFF_INTEGRATION TO ROLE <YOUR_ROLE>;
 
 -- 6.2 Git Repository
--- USE ROLE DATA_ENGINEERING;
-CREATE OR REPLACE GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF
+CREATE OR REPLACE GIT REPOSITORY DEMO_INTELLIGENCE_TARIFF
   API_INTEGRATION = GIT_TARIFF_INTEGRATION
-  ORIGIN = 'https://github.com/diegojuritz-atrium/demo-intelligence-tariff.git';
+  ORIGIN = 'https://github.com/<YOUR_GITHUB_ORG>/demo-intelligence-tariff.git';
 
-ALTER GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
+ALTER GIT REPOSITORY DEMO_INTELLIGENCE_TARIFF FETCH;
 
 
 -- ============================================================================
@@ -589,35 +589,36 @@ ALTER GIT REPOSITORY DJURITZ.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
 --   3. Select target: dev, warehouse: DE_WH
 --
 -- To verify:
--- SHOW DBT PROJECTS IN SCHEMA DJURITZ.TARIFF;
+-- SHOW DBT PROJECTS IN SCHEMA;
 --
 -- To run manually:
--- EXECUTE DBT PROJECT DJURITZ.TARIFF.TARIFF_INTELLIGENCE ARGS='build --target dev';
+-- EXECUTE DBT PROJECT TARIFF_INTELLIGENCE ARGS='build --target dev';
 
 
 -- ============================================================================
 -- SECTION 8: TASKS (Scheduling)
 -- ============================================================================
 
-CREATE OR ALTER TASK DJURITZ.TARIFF.DBT_RUN_DAILY
-  WAREHOUSE = DE_WH
+-- UPDATE warehouse name to match your environment
+CREATE OR ALTER TASK DBT_RUN_DAILY
+  WAREHOUSE = DE_WH  -- <-- change to your warehouse
   SCHEDULE = 'USING CRON 0 6 * * * America/New_York'
 AS
-  EXECUTE DBT PROJECT DJURITZ.TARIFF.TARIFF_INTELLIGENCE ARGS = 'run --target dev';
+  EXECUTE DBT PROJECT TARIFF_INTELLIGENCE ARGS = 'run --target dev';
 
-CREATE OR ALTER TASK DJURITZ.TARIFF.DBT_TEST_DAILY
-  WAREHOUSE = DE_WH
-  AFTER DJURITZ.TARIFF.DBT_RUN_DAILY
+CREATE OR ALTER TASK DBT_TEST_DAILY
+  WAREHOUSE = DE_WH  -- <-- change to your warehouse
+  AFTER DBT_RUN_DAILY
 AS
-  EXECUTE DBT PROJECT DJURITZ.TARIFF.TARIFF_INTELLIGENCE ARGS = 'test --target dev';
+  EXECUTE DBT PROJECT TARIFF_INTELLIGENCE ARGS = 'test --target dev';
 
 -- Activate tasks (child first, then parent)
-ALTER TASK DJURITZ.TARIFF.DBT_TEST_DAILY RESUME;
-ALTER TASK DJURITZ.TARIFF.DBT_RUN_DAILY RESUME;
+ALTER TASK DBT_TEST_DAILY RESUME;
+ALTER TASK DBT_RUN_DAILY RESUME;
 
 -- To suspend:
--- ALTER TASK DJURITZ.TARIFF.DBT_RUN_DAILY SUSPEND;
--- ALTER TASK DJURITZ.TARIFF.DBT_TEST_DAILY SUSPEND;
+-- ALTER TASK DBT_RUN_DAILY SUSPEND;
+-- ALTER TASK DBT_TEST_DAILY SUSPEND;
 
 
 -- ============================================================================
@@ -628,12 +629,13 @@ ALTER TASK DJURITZ.TARIFF.DBT_RUN_DAILY RESUME;
 --   2. Create new agent: TARIFF_AGENT in DJURITZ.TARIFF
 --   3. Add tool: Cortex Analyst (text-to-SQL)
 --      - Name: tariff_intelligence_agent
---      - Semantic View: DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE
+--      - Semantic View: <YOUR_DB>.<YOUR_SCHEMA>.SV_TARIFF_INTELLIGENCE
 --   4. Save and publish
 --
 -- Alternatively via SQL:
 
-CREATE OR REPLACE AGENT DJURITZ.TARIFF.TARIFF_AGENT
+-- UPDATE the semantic_view reference to match your DB.SCHEMA
+CREATE OR REPLACE AGENT TARIFF_AGENT
   COMMENT = 'Tariff Intelligence Agent for procurement optimization'
   PROFILE = '{"display_name": "tariff_agent"}'
   AGENT_SPEC = '{
@@ -644,7 +646,7 @@ CREATE OR REPLACE AGENT DJURITZ.TARIFF.TARIFF_AGENT
         "type": "cortex_analyst_text_to_sql",
         "name": "tariff_intelligence_agent",
         "description": "Answers questions about procurement costs, tariffs, suppliers, shipping routes, and landed costs for a US-based manufacturer sourcing globally.",
-        "semantic_view": "DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE"
+        "semantic_view": "<YOUR_DB>.<YOUR_SCHEMA>.SV_TARIFF_INTELLIGENCE"
       }
     }]
   }';
@@ -654,9 +656,10 @@ CREATE OR REPLACE AGENT DJURITZ.TARIFF.TARIFF_AGENT
 -- SECTION 10: GRANTS
 -- ============================================================================
 
-GRANT REFERENCES, SELECT ON SEMANTIC VIEW DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE TO ROLE DEMO_AGENT_RL;
-GRANT SELECT ON ALL TABLES IN SCHEMA DJURITZ.TARIFF TO ROLE DJURITZ_READONLY;
-GRANT SELECT ON ALL VIEWS IN SCHEMA DJURITZ.TARIFF TO ROLE DJURITZ_READONLY;
+-- UPDATE role names to match your environment
+-- GRANT REFERENCES, SELECT ON SEMANTIC VIEW SV_TARIFF_INTELLIGENCE TO ROLE <YOUR_ROLE>;
+-- GRANT SELECT ON ALL TABLES IN SCHEMA TO ROLE <YOUR_READONLY_ROLE>;
+-- GRANT SELECT ON ALL VIEWS IN SCHEMA TO ROLE <YOUR_READONLY_ROLE>;
 
 
 -- ============================================================================
@@ -664,14 +667,14 @@ GRANT SELECT ON ALL VIEWS IN SCHEMA DJURITZ.TARIFF TO ROLE DJURITZ_READONLY;
 -- ============================================================================
 
 -- Row counts
-SELECT 'RAW_COUNTRIES' AS table_name, COUNT(*) AS row_count FROM DJURITZ.TARIFF.RAW_COUNTRIES
-UNION ALL SELECT 'RAW_PRODUCT_CATALOG', COUNT(*) FROM DJURITZ.TARIFF.RAW_PRODUCT_CATALOG
-UNION ALL SELECT 'RAW_PARTS', COUNT(*) FROM DJURITZ.TARIFF.RAW_PARTS
-UNION ALL SELECT 'RAW_PRODUCT_PARTS', COUNT(*) FROM DJURITZ.TARIFF.RAW_PRODUCT_PARTS
-UNION ALL SELECT 'RAW_SUPPLIERS', COUNT(*) FROM DJURITZ.TARIFF.RAW_SUPPLIERS
-UNION ALL SELECT 'RAW_PARTS_SUPPLIER', COUNT(*) FROM DJURITZ.TARIFF.RAW_PARTS_SUPPLIER
-UNION ALL SELECT 'RAW_MARKET_TARIFFS', COUNT(*) FROM DJURITZ.TARIFF.RAW_MARKET_TARIFFS
-UNION ALL SELECT 'RAW_ROUTES', COUNT(*) FROM DJURITZ.TARIFF.RAW_ROUTES
+SELECT 'RAW_COUNTRIES' AS table_name, COUNT(*) AS row_count FROM RAW_COUNTRIES
+UNION ALL SELECT 'RAW_PRODUCT_CATALOG', COUNT(*) FROM RAW_PRODUCT_CATALOG
+UNION ALL SELECT 'RAW_PARTS', COUNT(*) FROM RAW_PARTS
+UNION ALL SELECT 'RAW_PRODUCT_PARTS', COUNT(*) FROM RAW_PRODUCT_PARTS
+UNION ALL SELECT 'RAW_SUPPLIERS', COUNT(*) FROM RAW_SUPPLIERS
+UNION ALL SELECT 'RAW_PARTS_SUPPLIER', COUNT(*) FROM RAW_PARTS_SUPPLIER
+UNION ALL SELECT 'RAW_MARKET_TARIFFS', COUNT(*) FROM RAW_MARKET_TARIFFS
+UNION ALL SELECT 'RAW_ROUTES', COUNT(*) FROM RAW_ROUTES
 UNION ALL SELECT 'SLV_SUPPLIERS', COUNT(*) FROM DJURITZ.TARIFF.SLV_SUPPLIERS
 UNION ALL SELECT 'SLV_PARTS_COSTED', COUNT(*) FROM DJURITZ.TARIFF.SLV_PARTS_COSTED
 UNION ALL SELECT 'SLV_PRODUCT_BOM', COUNT(*) FROM DJURITZ.TARIFF.SLV_PRODUCT_BOM
@@ -688,7 +691,7 @@ ORDER BY 1;
 
 -- Test semantic view
 SELECT * FROM SEMANTIC_VIEW(
-  DJURITZ.TARIFF.SV_TARIFF_INTELLIGENCE
+  SV_TARIFF_INTELLIGENCE
   METRICS procurement.avg_landed_cost, procurement.avg_tariff_rate, procurement.procurement_count
   DIMENSIONS dim_supplier.supplier_country
 )
@@ -696,9 +699,9 @@ ORDER BY PROCUREMENT_COUNT DESC
 LIMIT 10;
 
 -- Show all objects
-SHOW OBJECTS IN SCHEMA DJURITZ.TARIFF;
-SHOW SEMANTIC VIEWS IN SCHEMA DJURITZ.TARIFF;
-SHOW TASKS IN SCHEMA DJURITZ.TARIFF;
-SHOW GIT REPOSITORIES IN SCHEMA DJURITZ.TARIFF;
-SHOW DBT PROJECTS IN SCHEMA DJURITZ.TARIFF;
-SHOW AGENTS IN SCHEMA DJURITZ.TARIFF;
+SHOW OBJECTS IN SCHEMA;
+SHOW SEMANTIC VIEWS IN SCHEMA;
+SHOW TASKS IN SCHEMA;
+SHOW GIT REPOSITORIES IN SCHEMA;
+SHOW DBT PROJECTS IN SCHEMA;
+SHOW AGENTS IN SCHEMA;
