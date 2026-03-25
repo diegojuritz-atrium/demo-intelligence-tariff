@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: tariff_raw
-    database: DJURITZ
+    database: DEMO_INTELLIGENCE
     schema: TARIFF
     tables:
       - name: RAW_COUNTRIES
