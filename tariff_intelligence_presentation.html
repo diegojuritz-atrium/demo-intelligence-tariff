@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tariff Intelligence - Demo Presentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; overflow: hidden; }
+  .slide { width: 100vw; height: 100vh; display: none; padding: 60px 80px; position: relative; flex-direction: column; justify-content: center; }
+  .slide.active { display: flex; }
+  .slide-number { position: absolute; bottom: 30px; right: 40px; font-size: 14px; color: #64748b; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #38bdf8, #818cf8); transition: width 0.3s; z-index: 100; }
+  h1 { font-size: 52px; font-weight: 700; margin-bottom: 20px; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+  h2 { font-size: 40px; font-weight: 600; margin-bottom: 30px; color: #f1f5f9; }
+  h3 { font-size: 24px; font-weight: 500; color: #38bdf8; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 2px; }
+  p { font-size: 20px; line-height: 1.7; color: #94a3b8; max-width: 900px; }
+  .subtitle { font-size: 24px; color: #94a3b8; margin-bottom: 40px; }
+  ul { list-style: none; padding: 0; }
+  ul li { font-size: 20px; line-height: 1.6; color: #cbd5e1; padding: 8px 0; padding-left: 28px; position: relative; }
+  ul li::before { content: '→'; position: absolute; left: 0; color: #38bdf8; font-weight: 600; }
+  .tag { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 4px 14px; border-radius: 20px; font-size: 14px; font-weight: 500; margin: 4px 4px 4px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+  .card { background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; border-radius: 16px; padding: 30px; }
+  .card h4 { font-size: 18px; font-weight: 600; color: #f1f5f9; margin-bottom: 12px; }
+  .card p { font-size: 16px; color: #94a3b8; }
+  .card-accent { border-left: 3px solid #38bdf8; }
+  .badge { display: inline-block; background: #1e293b; border: 1px solid #334155; padding: 6px 16px; border-radius: 8px; font-size: 14px; color: #cbd5e1; margin: 4px; font-family: monospace; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  table th { text-align: left; padding: 12px 16px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; font-weight: 600; border-bottom: 2px solid #334155; }
+  table td { padding: 10px 16px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+  table tr:hover td { background: rgba(56, 189, 248, 0.05); }
+  .layer { display: flex; align-items: center; gap: 20px; padding: 16px 24px; border-radius: 12px; margin: 8px 0; }
+  .layer-bronze { background: rgba(205, 127, 50, 0.15); border-left: 4px solid #cd7f32; }
+  .layer-silver { background: rgba(192, 192, 192, 0.1); border-left: 4px solid #c0c0c0; }
+  .layer-gold { background: rgba(255, 215, 0, 0.1); border-left: 4px solid #ffd700; }
+  .layer-semantic { background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38bdf8; }
+  .layer-label { font-weight: 600; min-width: 100px; font-size: 18px; }
+  .layer-desc { font-size: 16px; color: #94a3b8; }
+  .flow-diagram { text-align: center; padding: 20px 0; }
+  .flow-box { display: inline-block; background: #1e293b; border: 1px solid #334155; padding: 14px 28px; border-radius: 10px; margin: 6px; font-size: 16px; }
+  .flow-arrow { color: #38bdf8; font-size: 24px; margin: 0 8px; }
+  .code { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #e2e8f0; overflow-x: auto; white-space: pre; line-height: 1.6; }
+  .highlight { color: #38bdf8; }
+  .keyword { color: #c084fc; }
+  .string { color: #34d399; }
+  .controls { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+  .controls button { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+  .controls button:hover { background: #334155; border-color: #38bdf8; }
+  .icon { font-size: 36px; margin-bottom: 16px; }
+  .center { text-align: center; }
+  .small { font-size: 14px; color: #64748b; }
+  .mt { margin-top: 20px; }
+  .mb { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE 1: Title -->
+<div class="slide active" id="s1">
+  <div>
+    <h3>Snowflake Demo</h3>
+    <h1>Tariff Intelligence</h1>
+    <p class="subtitle">AI-powered procurement optimization for a US-based manufacturer sourcing globally</p>
+    <div class="mt">
+      <span class="tag">Cortex Agent</span>
+      <span class="tag">Semantic View</span>
+      <span class="tag">dbt</span>
+      <span class="tag">Star Schema</span>
+      <span class="tag">Text-to-SQL</span>
+    </div>
+    <p class="mt small">DEMO_INTELLIGENCE.TARIFF &middot; Snowflake</p>
+  </div>
+  <div class="slide-number">1</div>
+</div>
+
+<!-- SLIDE 2: What Is This? -->
+<div class="slide" id="s2">
+  <div>
+    <h3>Overview</h3>
+    <h2>What Is This?</h2>
+    <div class="grid-2">
+      <div>
+        <p>A complete end-to-end demo that shows how a US manufacturer can use <strong style="color:#f1f5f9">Snowflake Intelligence</strong> to ask natural-language questions about:</p>
+        <ul class="mt">
+          <li>Procurement costs and landed cost breakdown</li>
+          <li>Tariff rates by country and product category</li>
+          <li>Supplier performance and optimization</li>
+          <li>Shipping routes and transit analysis</li>
+          <li>Historical tariff trends and impact</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom: 20px;">
+          <h4>💬 Ask in plain English</h4>
+          <p>"Which suppliers in Asia have the lowest landed cost for electronics?"</p>
+        </div>
+        <div class="card">
+          <h4>📊 Get SQL-backed answers</h4>
+          <p>The Cortex Agent translates your question into optimized SQL using the Semantic View.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2</div>
+</div>
+
+<!-- SLIDE 3: Architecture -->
+<div class="slide" id="s3">
+  <div>
+    <h3>Architecture</h3>
+    <h2>Data Pipeline</h2>
+    <div class="layer layer-bronze">
+      <span class="layer-label" style="color:#cd7f32">Bronze</span>
+      <span class="layer-desc">8 RAW tables — countries, products, parts, suppliers, tariffs, shipping, BOM, procurement &middot; Synthetic data via INSERT</span>
+    </div>
+    <div class="layer layer-silver">
+      <span class="layer-label" style="color:#c0c0c0">Staging</span>
+      <span class="layer-desc">8 STG views — type casting, renaming, deduplication &middot; dbt views</span>
+    </div>
+    <div class="layer layer-silver">
+      <span class="layer-label" style="color:#c0c0c0">Silver</span>
+      <span class="layer-desc">5 SLV tables — joins, business logic, derived columns &middot; dbt intermediate models</span>
+    </div>
+    <div class="layer layer-gold">
+      <span class="layer-label" style="color:#ffd700">Gold</span>
+      <span class="layer-desc">7 GLD tables — star schema: 2 fact tables + 5 dimension tables &middot; dbt marts</span>
+    </div>
+    <div class="layer layer-semantic">
+      <span class="layer-label" style="color:#38bdf8">Semantic</span>
+      <span class="layer-desc">SV_TARIFF_INTELLIGENCE — business-friendly abstraction with facts, dimensions, metrics</span>
+    </div>
+    <div class="layer" style="background:rgba(129,140,248,0.1); border-left: 4px solid #818cf8;">
+      <span class="layer-label" style="color:#818cf8">Agent</span>
+      <span class="layer-desc">TARIFF_AGENT — Cortex Agent using text-to-SQL via the Semantic View</span>
+    </div>
+  </div>
+  <div class="slide-number">3</div>
+</div>
+
+<!-- SLIDE 4: Star Schema -->
+<div class="slide" id="s4">
+  <div>
+    <h3>Data Model</h3>
+    <h2>Gold Layer — Star Schema</h2>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#ffd700; margin-bottom:16px;">Fact Tables</h4>
+        <div class="card card-accent" style="margin-bottom:12px;">
+          <h4>GLD_FACT_PROCUREMENT</h4>
+          <p>Every supplier × part × product combination with unit cost, tariff, shipping, and fully-loaded landed cost</p>
+        </div>
+        <div class="card card-accent">
+          <h4>GLD_FACT_TARIFF_IMPACT</h4>
+          <p>Historical tariff rates by country, HS code, and product category over time</p>
+        </div>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:16px;">Dimension Tables</h4>
+        <div class="card" style="margin-bottom:8px; padding:16px 20px;"><h4 style="margin:0">GLD_DIM_PRODUCT</h4><p style="font-size:14px">Products, categories, MSRP</p></div>
+        <div class="card" style="margin-bottom:8px; padding:16px 20px;"><h4 style="margin:0">GLD_DIM_PART</h4><p style="font-size:14px">Parts, numbers, categories, weight</p></div>
+        <div class="card" style="margin-bottom:8px; padding:16px 20px;"><h4 style="margin:0">GLD_DIM_SUPPLIER</h4><p style="font-size:14px">Suppliers, country, region, rating</p></div>
+        <div class="card" style="margin-bottom:8px; padding:16px 20px;"><h4 style="margin:0">GLD_DIM_COUNTRY</h4><p style="font-size:14px">Countries, ISO codes, regions, continents</p></div>
+        <div class="card" style="padding:16px 20px;"><h4 style="margin:0">GLD_DIM_DATE</h4><p style="font-size:14px">Calendar: dates, weeks, months, quarters, years</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4</div>
+</div>
+
+<!-- SLIDE 5: dbt Project -->
+<div class="slide" id="s5">
+  <div>
+    <h3>Transformation</h3>
+    <h2>dbt Project</h2>
+    <div class="grid-2">
+      <div>
+        <p class="mb">The dbt project <strong style="color:#f1f5f9">tariff_intelligence</strong> transforms raw tables through staging, silver, and gold layers.</p>
+        <table>
+          <tr><th>Layer</th><th>Models</th><th>Materialization</th></tr>
+          <tr><td style="color:#c0c0c0">Staging</td><td>8 stg_* views</td><td>view</td></tr>
+          <tr><td style="color:#c0c0c0">Silver</td><td>5 slv_* tables</td><td>table</td></tr>
+          <tr><td style="color:#ffd700">Gold</td><td>7 gld_* tables</td><td>table</td></tr>
+        </table>
+        <p class="mt small">Total: 20 models with tests and documentation</p>
+      </div>
+      <div>
+        <div class="code">models/
+├── staging/
+│   ├── stg_countries.sql
+│   ├── stg_product_catalog.sql
+│   ├── stg_parts.sql
+│   ├── stg_suppliers.sql
+│   └── ...
+├── silver/
+│   ├── slv_procurement_base.sql
+│   ├── slv_tariff_enriched.sql
+│   └── ...
+└── gold/
+    ├── gld_fact_procurement.sql
+    ├── gld_fact_tariff_impact.sql
+    ├── gld_dim_product.sql
+    └── ...</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5</div>
+</div>
+
+<!-- SLIDE 6: What is a Semantic View -->
+<div class="slide" id="s6">
+  <div>
+    <h3>Core Concept</h3>
+    <h2>What Is a Semantic View?</h2>
+    <div class="grid-2">
+      <div>
+        <p>A <strong style="color:#f1f5f9">Semantic View</strong> is a Snowflake object that sits on top of physical tables and provides a <strong style="color:#38bdf8">business-friendly abstraction layer</strong>.</p>
+        <p class="mt">Instead of writing raw SQL with joins, filters, and aggregations, users (and AI agents) query using business concepts. Snowflake translates those into optimized SQL automatically.</p>
+        <div class="mt">
+          <span class="tag">No SQL needed</span>
+          <span class="tag">Consistent metrics</span>
+          <span class="tag">AI-ready</span>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>Without Semantic View</h4>
+          <p style="font-family:monospace; font-size:14px; color:#f87171">SELECT AVG(f.LANDED_COST) FROM GLD_FACT_PROCUREMENT f JOIN GLD_DIM_SUPPLIER s ON f.SUPPLIER_KEY = s.SUPPLIER_KEY GROUP BY s.SUPPLIER_COUNTRY...</p>
+        </div>
+        <div class="card" style="border-color:#38bdf8;">
+          <h4>With Semantic View</h4>
+          <p style="font-family:monospace; font-size:14px; color:#34d399">"What's the average landed cost by supplier country?"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6</div>
+</div>
+
+<!-- SLIDE 7: Semantic View Components -->
+<div class="slide" id="s7">
+  <div>
+    <h3>Semantic View</h3>
+    <h2>The 7 Building Blocks</h2>
+    <div class="grid-3" style="grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto;">
+      <div class="card card-accent">
+        <div class="icon">📋</div>
+        <h4>1. Tables</h4>
+        <p>Physical tables exposed with aliases. Define <em>what data</em> is available.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="icon">🔗</div>
+        <h4>2. Relationships</h4>
+        <p>Join paths between facts and dimensions. Define <em>how tables connect</em>.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="icon">🔢</div>
+        <h4>3. Facts</h4>
+        <p>Raw numeric columns — the "atoms" that get aggregated into metrics.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="icon">📐</div>
+        <h4>4. Dimensions</h4>
+        <p>Categorical columns for slicing and grouping: the "by" in every question.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="icon">📊</div>
+        <h4>5. Metrics</h4>
+        <p>Pre-defined aggregations (SUM, AVG, etc.) ensuring consistent definitions.</p>
+      </div>
+      <div class="card card-accent">
+        <div class="icon">🏷️</div>
+        <h4>6. Synonyms</h4>
+        <p>Alternative names so the AI understands "vendor" = supplier, "spend" = cost.</p>
+      </div>
+    </div>
+    <div class="card card-accent mt" style="max-width:430px;">
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div class="icon" style="margin:0">🤖</div>
+        <div><h4 style="margin-bottom:4px">7. AI Instructions</h4><p style="font-size:14px">Free-text directives guiding LLM behavior and SQL generation.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7</div>
+</div>
+
+<!-- SLIDE 8: Tables & Relationships -->
+<div class="slide" id="s8">
+  <div>
+    <h3>Semantic View Detail</h3>
+    <h2>Tables & Relationships</h2>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">7 Tables</h4>
+        <table>
+          <tr><th>Alias</th><th>Physical Table</th><th>Role</th></tr>
+          <tr><td><code>procurement</code></td><td>GLD_FACT_PROCUREMENT</td><td>Fact</td></tr>
+          <tr><td><code>tariff_impact</code></td><td>GLD_FACT_TARIFF_IMPACT</td><td>Fact</td></tr>
+          <tr><td><code>dim_product</code></td><td>GLD_DIM_PRODUCT</td><td>Dimension</td></tr>
+          <tr><td><code>dim_part</code></td><td>GLD_DIM_PART</td><td>Dimension</td></tr>
+          <tr><td><code>dim_supplier</code></td><td>GLD_DIM_SUPPLIER</td><td>Dimension</td></tr>
+          <tr><td><code>dim_country</code></td><td>GLD_DIM_COUNTRY</td><td>Dimension</td></tr>
+          <tr><td><code>dim_date</code></td><td>GLD_DIM_DATE</td><td>Dimension</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">6 Relationships (Join Paths)</h4>
+        <table>
+          <tr><th>From → To</th><th>Key</th></tr>
+          <tr><td>procurement → dim_product</td><td>PRODUCT_KEY</td></tr>
+          <tr><td>procurement → dim_part</td><td>PART_KEY</td></tr>
+          <tr><td>procurement → dim_supplier</td><td>SUPPLIER_KEY</td></tr>
+          <tr><td>procurement → dim_country</td><td>SUPPLIER_COUNTRY_KEY</td></tr>
+          <tr><td>tariff_impact → dim_country</td><td>SOURCE_COUNTRY_KEY</td></tr>
+          <tr><td>tariff_impact → dim_date</td><td>EFFECTIVE_DATE_KEY</td></tr>
+        </table>
+        <p class="mt small">Relationships tell the AI how to join tables when a question spans multiple entities.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8</div>
+</div>
+
+<!-- SLIDE 9: Facts & Dimensions -->
+<div class="slide" id="s9">
+  <div>
+    <h3>Semantic View Detail</h3>
+    <h2>Facts & Dimensions</h2>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">11 Facts (Raw Numeric Values)</h4>
+        <div style="font-size:15px; line-height:1.8;">
+          <span class="badge">unit_cost</span>
+          <span class="badge">total_part_cost</span>
+          <span class="badge">tariff_cost</span>
+          <span class="badge">shipping_cost</span>
+          <span class="badge">landed_cost</span>
+          <span class="badge">tariff_rate_%</span>
+          <span class="badge">quantity</span>
+          <span class="badge">supplier_rating</span>
+          <span class="badge">lead_time_days</span>
+          <span class="badge">transit_days</span>
+          <span class="badge">tariff_rate_impact</span>
+        </div>
+        <p class="mt small">Facts are the building blocks of metrics. They represent individual row values.</p>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">25 Dimensions (Slice & Filter)</h4>
+        <div style="font-size:14px; line-height:1.8;">
+          <span class="badge">product_name</span>
+          <span class="badge">product_category</span>
+          <span class="badge">sub_category</span>
+          <span class="badge">msrp</span>
+          <span class="badge">part_name</span>
+          <span class="badge">part_number</span>
+          <span class="badge">part_category</span>
+          <span class="badge">supplier_name</span>
+          <span class="badge">supplier_country</span>
+          <span class="badge">supplier_region</span>
+          <span class="badge">supplier_continent</span>
+          <span class="badge">country_name</span>
+          <span class="badge">country_code</span>
+          <span class="badge">region</span>
+          <span class="badge">continent</span>
+          <span class="badge">full_date</span>
+          <span class="badge">year</span>
+          <span class="badge">quarter</span>
+          <span class="badge">month</span>
+          <span class="badge">is_critical</span>
+          <span class="badge">transport_mode</span>
+          <span class="badge">tariff_type</span>
+          <span class="badge">hs_code</span>
+          <span class="badge">tariff_band</span>
+          <span class="badge">product_category</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9</div>
+</div>
+
+<!-- SLIDE 10: Metrics -->
+<div class="slide" id="s10">
+  <div>
+    <h3>Semantic View Detail</h3>
+    <h2>16 Pre-Defined Metrics</h2>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">Procurement Metrics</h4>
+        <table>
+          <tr><th>Metric</th><th>Formula</th></tr>
+          <tr><td>total_landed_cost</td><td>SUM(landed_cost)</td></tr>
+          <tr><td>avg_landed_cost</td><td>AVG(landed_cost)</td></tr>
+          <tr><td>total_tariff_cost</td><td>SUM(tariff_cost)</td></tr>
+          <tr><td>total_shipping</td><td>SUM(shipping_cost)</td></tr>
+          <tr><td>avg_tariff_rate</td><td>AVG(tariff_rate)</td></tr>
+          <tr><td>procurement_count</td><td>COUNT(*)</td></tr>
+          <tr><td>min_landed_cost</td><td>MIN(landed_cost)</td></tr>
+          <tr><td>max_landed_cost</td><td>MAX(landed_cost)</td></tr>
+          <tr><td>avg_supplier_rating</td><td>AVG(rating)</td></tr>
+          <tr><td>avg_lead_time</td><td>AVG(lead_time)</td></tr>
+          <tr><td>avg_transit_days</td><td>AVG(transit)</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:12px;">Tariff & Derived Metrics</h4>
+        <table>
+          <tr><th>Metric</th><th>Formula</th></tr>
+          <tr><td>avg_tariff_rate_impact</td><td>AVG(tariff_rate)</td></tr>
+          <tr><td>max_tariff_rate</td><td>MAX(tariff_rate)</td></tr>
+          <tr><td>tariff_record_count</td><td>COUNT(*)</td></tr>
+          <tr><td style="color:#ffd700">tariff_pct_of_landed</td><td>tariff / landed × 100</td></tr>
+          <tr><td style="color:#ffd700">shipping_pct_of_landed</td><td>shipping / landed × 100</td></tr>
+        </table>
+        <div class="card mt">
+          <p style="font-size:15px;">Derived metrics (highlighted) reference <em>other metrics</em>, ensuring consistent calculations across all queries.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10</div>
+</div>
+
+<!-- SLIDE 11: Synonyms & AI Instructions -->
+<div class="slide" id="s11">
+  <div>
+    <h3>Semantic View Detail</h3>
+    <h2>Synonyms & AI Instructions</h2>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:16px;">Synonyms — Bridging Natural Language</h4>
+        <p class="mb">Users don't always use exact column names. Synonyms map business language to the right data.</p>
+        <table>
+          <tr><th>User Says</th><th>Resolves To</th></tr>
+          <tr><td>"total spend"</td><td>total_landed_cost metric</td></tr>
+          <tr><td>"vendor"</td><td>dim_supplier table</td></tr>
+          <tr><td>"freight cost"</td><td>total_shipping metric</td></tr>
+          <tr><td>"cheapest option"</td><td>min_landed_cost metric</td></tr>
+          <tr><td>"shipping method"</td><td>transport_mode dimension</td></tr>
+          <tr><td>"harmonized code"</td><td>hs_code dimension</td></tr>
+          <tr><td>"duty type"</td><td>tariff_type dimension</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:16px;">AI Instructions — Guiding the LLM</h4>
+        <div class="card" style="margin-bottom:16px;">
+          <h4>COMMENT</h4>
+          <p style="font-size:14px;">"Tariff & procurement intelligence for a US manufacturer sourcing globally. Analyze landed costs, tariff impacts, supplier optimization."</p>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <h4>AI_SQL_GENERATION</h4>
+          <p style="font-size:14px;">"Models a US manufacturer buying parts globally. Landed cost = part cost + tariff + shipping. Product categories: Electronics, Appliances, Industrial, Automotive. Round to 2 decimals."</p>
+        </div>
+        <div class="card">
+          <h4>AI_QUESTION_CATEGORIZATION</h4>
+          <p style="font-size:14px;">"Redirect unrelated questions. Clarify if user wants current vs historical tariffs."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11</div>
+</div>
+
+<!-- SLIDE 12: How It All Fits Together -->
+<div class="slide" id="s12">
+  <div>
+    <h3>End-to-End Flow</h3>
+    <h2>How a Question Becomes an Answer</h2>
+    <p class="mb" style="font-style:italic; color:#94a3b8;">"What's the average landed cost by supplier country for Electronics?"</p>
+    <div style="display:flex; flex-direction:column; gap:10px; max-width:800px;">
+      <div class="layer" style="background:rgba(129,140,248,0.1); border-left:4px solid #818cf8;">
+        <span class="layer-label" style="color:#818cf8; min-width:180px;">AI Instructions</span>
+        <span class="layer-desc">Understands business context and domain rules</span>
+      </div>
+      <div class="layer" style="background:rgba(56,189,248,0.1); border-left:4px solid #38bdf8;">
+        <span class="layer-label" style="color:#38bdf8; min-width:180px;">Synonyms</span>
+        <span class="layer-desc">Resolves "landed cost" → landed_cost_fact</span>
+      </div>
+      <div class="layer" style="background:rgba(52,211,153,0.1); border-left:4px solid #34d399;">
+        <span class="layer-label" style="color:#34d399; min-width:180px;">Metrics</span>
+        <span class="layer-desc">avg_landed_cost = AVG(landed_cost_fact)</span>
+      </div>
+      <div class="layer" style="background:rgba(251,191,36,0.1); border-left:4px solid #fbbf24;">
+        <span class="layer-label" style="color:#fbbf24; min-width:180px;">Facts</span>
+        <span class="layer-desc">landed_cost_fact → LANDED_COST column</span>
+      </div>
+      <div class="layer" style="background:rgba(244,114,182,0.1); border-left:4px solid #f472b6;">
+        <span class="layer-label" style="color:#f472b6; min-width:180px;">Dimensions</span>
+        <span class="layer-desc">"supplier country" + "Electronics" filter</span>
+      </div>
+      <div class="layer" style="background:rgba(248,113,113,0.1); border-left:4px solid #f87171;">
+        <span class="layer-label" style="color:#f87171; min-width:180px;">Relationships</span>
+        <span class="layer-desc">Joins procurement → dim_supplier, dim_product</span>
+      </div>
+      <div class="layer" style="background:rgba(205,127,50,0.1); border-left:4px solid #cd7f32;">
+        <span class="layer-label" style="color:#cd7f32; min-width:180px;">Tables</span>
+        <span class="layer-desc">GLD_FACT_PROCUREMENT + GLD_DIM_SUPPLIER + GLD_DIM_PRODUCT</span>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12</div>
+</div>
+
+<!-- SLIDE 13: Cortex Agent -->
+<div class="slide" id="s13">
+  <div>
+    <h3>AI Layer</h3>
+    <h2>Cortex Agent — TARIFF_AGENT</h2>
+    <div class="grid-2">
+      <div>
+        <p class="mb">The Cortex Agent is the conversational interface. Users ask questions in natural language and the agent uses the Semantic View to generate and execute SQL.</p>
+        <div class="code" style="font-size:13px;">CREATE OR REPLACE AGENT TARIFF_AGENT
+  FROM SPECIFICATION
+  $$
+  <span class="keyword">models</span>:
+    <span class="keyword">orchestration</span>: <span class="string">auto</span>
+
+  <span class="keyword">tools</span>:
+    - <span class="keyword">tool_spec</span>:
+        <span class="keyword">type</span>: <span class="string">cortex_analyst_text_to_sql</span>
+        <span class="keyword">name</span>: <span class="string">tariff_intelligence_agent</span>
+
+  <span class="keyword">tool_resources</span>:
+    <span class="keyword">tariff_intelligence_agent</span>:
+      <span class="keyword">semantic_view</span>: <span class="string">DEMO_INTELLIGENCE.TARIFF
+        .SV_TARIFF_INTELLIGENCE</span>
+  $$;</div>
+      </div>
+      <div>
+        <h4 style="color:#38bdf8; margin-bottom:16px;">How It Works</h4>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>1. User asks a question</h4>
+          <p>"Show me top 5 countries by total tariff cost"</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>2. Agent reasons with LLM</h4>
+          <p>Picks the text-to-SQL tool and maps concepts to semantic view elements</p>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <h4>3. SQL is generated</h4>
+          <p>Using metrics, dimensions, relationships, and AI instructions</p>
+        </div>
+        <div class="card">
+          <h4>4. Results returned</h4>
+          <p>Clean, formatted answer with the underlying SQL visible</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13</div>
+</div>
+
+<!-- SLIDE 14: Demo Questions -->
+<div class="slide" id="s14">
+  <div>
+    <h3>Try It Out</h3>
+    <h2>Demo Questions</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h4 style="color:#38bdf8">Cost Analysis</h4>
+        <ul>
+          <li>What's the average landed cost by product category?</li>
+          <li>Show total spend by supplier country</li>
+          <li>Which parts have the highest tariff cost?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:#34d399">Supplier Intelligence</h4>
+        <ul>
+          <li>Top 10 suppliers by rating with lowest landed cost</li>
+          <li>Compare lead times across Asian suppliers</li>
+          <li>Which vendors have both high rating and low cost?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:#fbbf24">Tariff Impact</h4>
+        <ul>
+          <li>What % of landed cost is tariffs vs shipping?</li>
+          <li>Countries with highest tariff rates for Electronics</li>
+          <li>How do tariff rates vary by transport mode?</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="card">
+        <h4 style="color:#f472b6">Supply Chain</h4>
+        <ul>
+          <li>Average transit days by shipping method and region</li>
+          <li>Critical parts with longest lead times</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:#818cf8">Strategic</h4>
+        <ul>
+          <li>If I switch from Sea to Air for China suppliers, what's the cost impact?</li>
+          <li>Cheapest sourcing option per product category</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14</div>
+</div>
+
+<!-- SLIDE 15: Deployment -->
+<div class="slide" id="s15">
+  <div>
+    <h3>Getting Started</h3>
+    <h2>Deployment Steps</h2>
+    <div class="grid-2">
+      <div>
+        <div style="display:flex; gap:16px; margin-bottom:20px; align-items:flex-start;">
+          <div style="background:#38bdf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">1</div>
+          <div><h4 style="color:#f1f5f9">Create Git Integration</h4><p style="font-size:15px">API integration for GitHub access</p></div>
+        </div>
+        <div style="display:flex; gap:16px; margin-bottom:20px; align-items:flex-start;">
+          <div style="background:#38bdf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">2</div>
+          <div><h4 style="color:#f1f5f9">Create Git Repository Object</h4><p style="font-size:15px">Link Snowflake to the GitHub repo</p></div>
+        </div>
+        <div style="display:flex; gap:16px; margin-bottom:20px; align-items:flex-start;">
+          <div style="background:#38bdf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">3</div>
+          <div><h4 style="color:#f1f5f9">Connect Workspace</h4><p style="font-size:15px">Open Workspaces → Connect to Git</p></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex; gap:16px; margin-bottom:20px; align-items:flex-start;">
+          <div style="background:#818cf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">4</div>
+          <div><h4 style="color:#f1f5f9">Run Setup SQL</h4><p style="font-size:15px">Execute tarrif_complete_setup.sql for raw tables + semantic view + agent</p></div>
+        </div>
+        <div style="display:flex; gap:16px; margin-bottom:20px; align-items:flex-start;">
+          <div style="background:#818cf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">5</div>
+          <div><h4 style="color:#f1f5f9">Deploy dbt Project</h4><p style="font-size:15px">Connect → Deploy dbt project from Workspace UI</p></div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="background:#818cf8; color:#0f172a; min-width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">6</div>
+          <div><h4 style="color:#f1f5f9">Build & Test</h4><p style="font-size:15px">dbt build, then ask questions via the Cortex Agent</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt" style="max-width:600px;">
+      <p style="font-size:15px;"><strong style="color:#f1f5f9;">Database:</strong> DEMO_INTELLIGENCE &middot; <strong style="color:#f1f5f9;">Schema:</strong> TARIFF &middot; <strong style="color:#f1f5f9;">Role:</strong> DATA_ENGINEERING</p>
+    </div>
+  </div>
+  <div class="slide-number">15</div>
+</div>
+
+<!-- SLIDE 16: Thank You -->
+<div class="slide" id="s16">
+  <div class="center" style="width:100%;">
+    <h3>Thank You</h3>
+    <h1>Tariff Intelligence</h1>
+    <p style="margin: 20px auto; max-width:600px; text-align:center;">Built entirely on Snowflake: raw data, dbt transformations, semantic view, and Cortex Agent — all in one platform.</p>
+    <div class="mt">
+      <span class="tag">DEMO_INTELLIGENCE.TARIFF</span>
+    </div>
+    <p class="mt small" style="text-align:center;">Use arrow keys or buttons to navigate &middot; Press F for fullscreen</p>
+  </div>
+  <div class="slide-number">16</div>
+</div>
+
+<!-- Navigation -->
+<div class="controls">
+  <button onclick="prevSlide()">← Prev</button>
+  <button onclick="nextSlide()">Next →</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const progress = document.getElementById('progress');
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = (n + total) % total;
+  slides[current].classList.add('active');
+  progress.style.width = ((current + 1) / total * 100) + '%';
+}
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+});
+
+progress.style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 > Snowflake Intelligence demo for a US-based manufacturer optimizing global procurement costs under tariff scenarios.
 
-**Repository:** [github.com/diegojuritz-atrium/demo-intelligence-tariff](https://github.com/diegojuritz-atrium/demo-intelligence-tariff)
+**Repository:** [github.com/AtriumAI/demo-intelligence-tariff](https://github.com/AtriumAI/demo-intelligence-tariff)
 **Platform:** Snowflake · dbt · Snowflake Intelligence
 **Database:** `DEMO_INTELLIGENCE` · **Schema:** `TARIFF`
 
@@ -194,16 +194,175 @@ SHOW TASKS IN SCHEMA DEMO_INTELLIGENCE.TARIFF;
 
 ## 🔍 Semantic View
 
-The semantic view `SV_TARIFF_INTELLIGENCE` sits on top of the gold star schema and provides a business-friendly interface for Snowflake Intelligence.
+A **Semantic View** is a Snowflake object that sits on top of physical tables and provides a **business-friendly abstraction layer**. Instead of writing raw SQL with joins, filters, and aggregations, users (and AI agents) query the semantic view using business concepts like "total spend by country." Snowflake translates those concepts into optimized SQL automatically.
 
-### What It Contains
+The semantic view `SV_TARIFF_INTELLIGENCE` is built on top of the gold star schema and is the data source for the Cortex Agent.
 
-- **7 tables** connected via relationships (fact-to-dimension joins)
-- **11 facts:** unit cost, tariff cost, shipping cost, landed cost, quantity, supplier rating, lead time, transit days
-- **25 dimensions:** product, part, supplier, country, date hierarchies, tariff type, transport mode
-- **16 metrics:** total/avg landed cost, tariff %, shipping %, procurement count, min/max costs
-- **Synonyms:** business-friendly aliases (e.g., "total spend" → `total_landed_cost`, "vendor" → supplier)
-- **AI instructions:** guides the LLM on how to interpret business questions
+### Anatomy of a Semantic View
+
+A semantic view is composed of the following building blocks:
+
+#### 1. Tables
+
+**What they are:** The physical tables that the semantic view exposes. Each table gets a **logical alias** so downstream consumers refer to business names instead of table names.
+
+**Why they matter:** They define *what data* is available. Tables also have **primary keys** (used for join resolution) and **synonyms** (so the AI understands that "vendors" means the supplier table).
+
+| Alias | Physical Table | Role | Synonyms |
+|-------|---------------|------|----------|
+| `procurement` | `GLD_FACT_PROCUREMENT` | Fact table — procurement options with landed costs | "procurement options", "sourcing options", "landed cost analysis" |
+| `tariff_impact` | `GLD_FACT_TARIFF_IMPACT` | Fact table — tariff rates over time | "tariff changes", "tariff history", "duty rates" |
+| `dim_product` | `GLD_DIM_PRODUCT` | Dimension — products | "products", "items", "goods" |
+| `dim_part` | `GLD_DIM_PART` | Dimension — parts/components | "parts", "components", "materials" |
+| `dim_supplier` | `GLD_DIM_SUPPLIER` | Dimension — suppliers | "suppliers", "vendors", "manufacturers" |
+| `dim_country` | `GLD_DIM_COUNTRY` | Dimension — countries | "countries", "nations", "origins" |
+| `dim_date` | `GLD_DIM_DATE` | Dimension — calendar dates | "dates", "calendar" |
+
+#### 2. Relationships
+
+**What they are:** The join paths between tables. They define **how** fact tables connect to dimension tables using foreign key → primary key references.
+
+**Why they matter:** When a user asks "average landed cost by supplier country," the semantic view knows it must join `procurement` → `dim_supplier` via the `SUPPLIER_KEY`. Without relationships, the AI wouldn't know how to connect tables.
+
+| Relationship | From (Fact) | Join Column | To (Dimension) |
+|-------------|------------|-------------|----------------|
+| `procurement_to_product` | `procurement` | `PRODUCT_KEY` | `dim_product` |
+| `procurement_to_part` | `procurement` | `PART_KEY` | `dim_part` |
+| `procurement_to_supplier` | `procurement` | `SUPPLIER_KEY` | `dim_supplier` |
+| `procurement_to_country` | `procurement` | `SUPPLIER_COUNTRY_KEY` | `dim_country` |
+| `tariff_to_country` | `tariff_impact` | `SOURCE_COUNTRY_KEY` | `dim_country` |
+| `tariff_to_date` | `tariff_impact` | `EFFECTIVE_DATE_KEY` | `dim_date` |
+
+#### 3. Facts
+
+**What they are:** Numeric, measurable columns from the physical tables — the **raw values** that get aggregated. Think of them as the "atoms" of analysis.
+
+**Why they matter:** Facts are the building blocks of metrics. They represent the actual data points (e.g., a single row's `LANDED_COST` value), while metrics define *how* to aggregate them (e.g., `AVG(LANDED_COST)`). Facts alone are not queried directly — they feed into metrics.
+
+| Fact | Source Column | Description |
+|------|--------------|-------------|
+| `procurement.unit_cost_fact` | `UNIT_COST` | Base unit cost from supplier |
+| `procurement.total_part_cost_fact` | `TOTAL_PART_COST` | Total cost for parts in quantity |
+| `procurement.tariff_cost_fact` | `TARIFF_COST` | Tariff/duty dollar amount |
+| `procurement.shipping_cost_fact` | `TOTAL_SHIPPING_COST` | Total shipping cost |
+| `procurement.landed_cost_fact` | `LANDED_COST` | Fully loaded cost: part + tariff + shipping |
+| `procurement.tariff_rate_fact` | `TARIFF_RATE_PCT` | Tariff rate percentage |
+| `procurement.quantity_fact` | `QUANTITY_REQUIRED` | Parts quantity required |
+| `procurement.supplier_rating_fact` | `SUPPLIER_RATING` | Supplier quality rating (1–5) |
+| `procurement.lead_time_fact` | `LEAD_TIME_DAYS` | Supplier lead time in days |
+| `procurement.transit_days_fact` | `TRANSIT_DAYS` | Shipping transit days |
+| `tariff_impact.tariff_rate_impact_fact` | `TARIFF_RATE_PCT` | Tariff rate for impact analysis |
+
+#### 4. Dimensions
+
+**What they are:** Descriptive, categorical columns used to **slice, filter, and group** data. They answer *who, what, where, when*.
+
+**Why they matter:** Dimensions are the "by" in every question — "cost **by country**", "tariff **by product category**", "trend **by quarter**." They come from both dimension tables (product name, country) and fact tables (transport mode, tariff type).
+
+| Dimension | Source | Synonyms |
+|-----------|--------|----------|
+| `dim_product.product_name` | Product name | "product", "item name" |
+| `dim_product.product_category` | Product category | "category", "product type" |
+| `dim_product.sub_category` | Product subcategory | "subcategory" |
+| `dim_product.msrp_dim` | MSRP / retail price | "retail price", "list price" |
+| `dim_part.part_name` | Part/component name | "component name" |
+| `dim_part.part_number` | Part number | "part no", "part code" |
+| `dim_part.part_category` | Part category | "component type" |
+| `dim_supplier.supplier_name` | Supplier name | "vendor name" |
+| `dim_supplier.supplier_country` | Supplier country | "vendor country", "source country" |
+| `dim_supplier.supplier_region` | Supplier region | "vendor region" |
+| `dim_supplier.supplier_continent` | Supplier continent | — |
+| `dim_country.country_name` | Country name | "country", "nation" |
+| `dim_country.country_code_dim` | ISO country code | "iso code" |
+| `dim_country.region` | Geographic region | "geographic region" |
+| `dim_country.continent` | Continent | — |
+| `dim_date.full_date` | Calendar date | "date" |
+| `dim_date.year_num` | Year | "year" |
+| `dim_date.quarter_label` | Quarter | "quarter" |
+| `dim_date.month_name` | Month | "month" |
+| `procurement.is_critical_dim` | Is critical component | "critical part" |
+| `procurement.transport_mode_dim` | Transport mode | "shipping method" |
+| `procurement.tariff_type_dim` | Tariff type | "duty type" |
+| `tariff_impact.hs_code_dim` | HS code | "harmonized code", "commodity code" |
+| `tariff_impact.tariff_band_dim` | Tariff severity band | — |
+| `tariff_impact.product_category_dim` | Tariff product category | "tariff product category" |
+
+#### 5. Metrics
+
+**What they are:** Pre-defined **aggregation formulas** over facts. They are the actual calculations users query — SUM, AVG, MIN, MAX, COUNT, or derived ratios.
+
+**Why they matter:** Metrics ensure consistent business definitions. Everyone who asks "total spend" gets `SUM(LANDED_COST)`, not their own interpretation. Metrics can also reference other metrics (e.g., `tariff_pct_of_landed` divides two other metrics).
+
+| Metric | Formula | Synonyms |
+|--------|---------|----------|
+| `procurement.total_landed_cost` | `SUM(landed_cost_fact)` | "total cost", "total spend" |
+| `procurement.avg_landed_cost` | `AVG(landed_cost_fact)` | "average cost" |
+| `procurement.total_tariff_cost` | `SUM(tariff_cost_fact)` | "total duties" |
+| `procurement.total_shipping` | `SUM(shipping_cost_fact)` | "total freight cost" |
+| `procurement.avg_tariff_rate` | `AVG(tariff_rate_fact)` | "average tariff" |
+| `procurement.procurement_count` | `COUNT(PROCUREMENT_KEY)` | "number of options" |
+| `procurement.min_landed_cost` | `MIN(landed_cost_fact)` | "cheapest option" |
+| `procurement.max_landed_cost` | `MAX(landed_cost_fact)` | "most expensive" |
+| `procurement.avg_supplier_rating` | `AVG(supplier_rating_fact)` | "vendor rating" |
+| `procurement.avg_lead_time` | `AVG(lead_time_fact)` | — |
+| `procurement.avg_transit_days` | `AVG(transit_days_fact)` | — |
+| `tariff_impact.avg_tariff_rate_impact` | `AVG(tariff_rate_impact_fact)` | — |
+| `tariff_impact.max_tariff_rate` | `MAX(tariff_rate_impact_fact)` | "highest tariff" |
+| `tariff_impact.tariff_record_count` | `COUNT(TARIFF_IMPACT_KEY)` | — |
+| `tariff_pct_of_landed` | `total_tariff_cost / total_landed_cost × 100` | "tariff share" |
+| `shipping_pct_of_landed` | `total_shipping / total_landed_cost × 100` | "shipping share" |
+
+#### 6. Synonyms
+
+**What they are:** Alternative names attached to tables, facts, dimensions, and metrics so the AI agent can understand natural language variations.
+
+**Why they matter:** Users don't always use the exact column name. Someone might say "vendor" instead of "supplier", "total spend" instead of "total_landed_cost", or "freight cost" instead of "shipping cost." Synonyms bridge that gap so the AI resolves the right column regardless of phrasing.
+
+#### 7. AI Instructions
+
+**What they are:** Free-text directives embedded in the semantic view that guide the LLM's behavior when generating SQL.
+
+**Why they matter:** They provide business context that can't be inferred from column names alone.
+
+| Directive | Purpose | Value in this project |
+|-----------|---------|----------------------|
+| `COMMENT` | Overall description of the semantic view | "Tariff & procurement intelligence for a US manufacturer sourcing globally..." |
+| `AI_SQL_GENERATION` | Instructions for SQL generation | "Models a US manufacturer buying parts globally. Landed cost = part cost + tariff + shipping. Round to 2 decimals." |
+| `AI_QUESTION_CATEGORIZATION` | Instructions for question routing | "Redirect unrelated questions. Clarify if user wants current vs historical tariffs." |
+
+### How It All Fits Together
+
+```
+User: "What's the average landed cost by supplier country for Electronics?"
+
+                    ┌─────────────────────┐
+                    │  AI Instructions     │  ← Understands business context
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Synonyms           │  ← Resolves "landed cost" → landed_cost_fact
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Metrics            │  ← avg_landed_cost = AVG(landed_cost_fact)
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Facts              │  ← landed_cost_fact → LANDED_COST column
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Dimensions         │  ← "supplier country" + "Electronics" filter
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Relationships      │  ← Joins procurement → dim_supplier, dim_product
+                    └─────────┬───────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  Tables             │  ← GLD_FACT_PROCUREMENT + GLD_DIM_SUPPLIER + GLD_DIM_PRODUCT
+                    └─────────────────────┘
+```
 
 ### Example Query
 
@@ -305,7 +464,7 @@ These questions are designed to showcase business value during client and channe
 -- 1. Create API integration for GitHub
 CREATE OR REPLACE API INTEGRATION git_tariff_integration
   API_PROVIDER = git_https_api
-  API_ALLOWED_PREFIXES = ('https://github.com/diegojuritz-atrium')
+  API_ALLOWED_PREFIXES = ('https://github.com/AtriumAI')
   API_USER_AUTHENTICATION = (TYPE = SNOWFLAKE_GITHUB_APP)
   ENABLED = TRUE;
 
@@ -315,7 +474,7 @@ GRANT USAGE ON INTEGRATION git_tariff_integration TO ROLE DATA_ENGINEERING;
 -- 3. Create Git repository object
 CREATE OR REPLACE GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF
   API_INTEGRATION = git_tariff_integration
-  ORIGIN = 'https://github.com/diegojuritz-atrium/demo-intelligence-tariff.git';
+  ORIGIN = 'https://github.com/AtriumAI/demo-intelligence-tariff.git';
 
 -- 4. Sync with remote
 ALTER GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
@@ -379,7 +538,7 @@ Since this project is stored in a Git repository, you must manually deploy it in
 -- Create API integration for GitHub (requires ACCOUNTADMIN or appropriate privileges)
 CREATE OR REPLACE API INTEGRATION git_tariff_integration
   API_PROVIDER = git_https_api
-  API_ALLOWED_PREFIXES = ('https://github.com/diegojuritz-atrium')
+  API_ALLOWED_PREFIXES = ('https://github.com/AtriumAI')
   API_USER_AUTHENTICATION = (TYPE = SNOWFLAKE_GITHUB_APP)
   ENABLED = TRUE;
 
@@ -392,7 +551,7 @@ GRANT USAGE ON INTEGRATION git_tariff_integration TO ROLE DATA_ENGINEERING;
 ```sql
 CREATE OR REPLACE GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF
   API_INTEGRATION = git_tariff_integration
-  ORIGIN = 'https://github.com/diegojuritz-atrium/demo-intelligence-tariff.git';
+  ORIGIN = 'https://github.com/AtriumAI/demo-intelligence-tariff.git';
 
 -- Fetch latest changes
 ALTER GIT REPOSITORY DEMO_INTELLIGENCE.TARIFF.DEMO_INTELLIGENCE_TARIFF FETCH;
